@@ -31,6 +31,7 @@
 		<script>
 			/// FUNCTIONS and CONSTANTS
 			const server = "http://localhost:8090";
+			let timer;
 
 			var app = new Vue({
 				el: "#app",
@@ -46,6 +47,7 @@
 				},
 				methods: {
 					async getData(renewSession = false) {
+						console.log("getting data");
 						let url = `${server}/data`;
 						if (renewSession === true) url += "?renew=1";
 						let res = await axios.get(url);
@@ -59,6 +61,9 @@
 				},
 				created() {
 					this.getData(true);
+					timer = setInterval(() => {
+						this.getData(true);
+					}, 5000);
 				},
 			});
 
