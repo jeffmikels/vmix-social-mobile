@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="x-ua-compatible" content="ie=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+		<title>vMix Social Replacement</title>
+
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"
+			integrity="sha512-VZ6m0F78+yo3sbu48gElK4irv2dzPoep8oo9LEjxviigcnnnNvnTOJRSrIhuFk68FMLOpiNz+T77nNY89rnWDg=="
+			crossorigin="anonymous"
+		></script>
+		<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+	</head>
+
+	<body>
+		<div id="app">
+			<table style="width: 100%;">
+				<tr v-for="item in socialData.items">
+					<td><img :src="item.socialImage" /></td>
+					<td><img :src="item.avatarImage" /></td>
+					<td>{{item.userName}}</td>
+					<td>{{item.message}}</td>
+					<td>{{item.timeString}}</td>
+				</tr>
+			</table>
+		</div>
+		<script>
+			/// FUNCTIONS and CONSTANTS
+			const server = "http://localhost:8090";
+
+			var app = new Vue({
+				el: "#app",
+				data: {
+					confirmID: "",
+					sessionID: guid(),
+					activeFilter: "",
+					currentPage: 1,
+					pageCount: 1,
+					updateInterval: null,
+					viewQueue: false,
+					socialData: {},
+				},
+				methods: {
+					async getData(renewSession = false) {
+						if (renewSession) this.sessionID = guid();
+						let url = `${server}/data`;
+						let res = await axios.get(url);
+						var body = res.data;
+						this.socialData = body;
+					},
+				},
+				created() {
+					this.getData();
+				},
+			});
+
+			async function getData(renewSession = false) {
+				if (renewSession) sessionID = guid();
+				let url = `${parentVmixSocial}/update.aspx?sessionID=${sessionID}&filter=&page=${currentPage}&queue=${viewQueue}`;
+				let res = await axios.get(url);
+				var body = res.data;
+				var json = update2Json(body);
+				console.log(json);
+			}
+
+			function s4() {
+				return Math.floor((1 + Math.random()) * 0x10000)
+					.toString(16)
+					.substring(1);
+			}
+			function guid() {
+				return s4() + s4() + "-" + s4() + "-" + s4() + "-" + s4() + "-" + s4() + s4() + s4();
+			}
+
+			function update(text) {
+				eval(text);
+				// // first we get the field names from the setHead command
+				// var fields = [];
+				// var re, res;
+				// re = RegExp(/<th>(.*?)<\/th>/g);
+
+				// while (true) {
+				//     let m = re.exec(text);
+				//     if (m === null) break;
+				//     let content = m[1];
+				//     if (content != ' ') fields.push(content);
+				// }
+
+				// re = RegExp(/(<tr id=)/);
+			}
+
+			function setHead(html) {
+				console.log(html);
+			}
+			function prependRow(html) {
+				console.log(html);
+			}
+			function clearRows() {}
+			function updateTimes() {}
+			function setPaging(a, b) {}
+		</script>
+	</body>
+</html>
