@@ -23,7 +23,7 @@
 					<td><img :src="item.socialImage" /></td>
 					<td><img :src="item.avatarImage" /></td>
 					<td>{{item.userName}}</td>
-					<td>{{item.message}}</td>
+					<td v-html="item.message"></td>
 					<td>{{item.timeString}}</td>
 				</tr>
 			</table>

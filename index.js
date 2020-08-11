@@ -46,9 +46,25 @@ const socialData = { fields: [], items: [] };
 async function getData(renewSession = false) {
 	if (renewSession === true) sessionID = guid();
 	let url = `${parentVmixSocial}/update.aspx?sessionID=${sessionID}&filter=&page=${currentPage}&queue=${viewQueue}`;
-	let res = await axios.get(url);
-	var body = res.data;
-	if (body) handleJS(body);
+	axios
+		.get(url, { timeout: 2000 })
+		.then((response) => {
+			handleJS(response.data);
+		})
+		.catch((err) => {
+			handleErr(err);
+		});
+}
+
+async function sendRow(id) {
+	axios
+		.get(`${parentVmixSocial}/send.aspx?ID=${id}`, { timeout: 2000 })
+		.then((response) => {
+			console.log(response.data);
+		})
+		.catch((err) => {
+			handleErr(err);
+		});
 }
 
 function s4() {
@@ -58,6 +74,12 @@ function s4() {
 }
 function guid() {
 	return s4() + s4() + "-" + s4() + "-" + s4() + "-" + s4() + "-" + s4() + s4() + s4();
+}
+
+function handleErr(err) {
+	console.log(err.code);
+	console.log(err.message);
+	console.log(err.stack);
 }
 
 function handleJS(text) {
@@ -138,11 +160,6 @@ function clearRows() {
 }
 function updateTimes() {}
 function setPaging(a, b) {}
-
-async function sendRow(id) {
-	let res = await axios.get(`${parentVmixSocial}/send.aspx?ID=${id}`);
-	console.log(res.data);
-}
 
 function debug() {
 	console.log(JSON.stringify(socialData));
