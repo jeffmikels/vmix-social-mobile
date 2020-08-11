@@ -16,7 +16,14 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/data", async (req, res) => {
-	await getData();
+	await getData(req.query.renew === 1);
+	res.json(socialData);
+	// res.send(data);
+});
+
+/// ?rowId=[id]
+app.get("/sendRow", async (req, res) => {
+	await sendRow(req.query.rowId);
 	res.json(socialData);
 	// res.send(data);
 });
@@ -37,7 +44,7 @@ var viewQueue = false;
 const socialData = { fields: [], items: [] };
 
 async function getData(renewSession = false) {
-	if (renewSession) sessionID = guid();
+	if (renewSession === true) sessionID = guid();
 	let url = `${parentVmixSocial}/update.aspx?sessionID=${sessionID}&filter=&page=${currentPage}&queue=${viewQueue}`;
 	let res = await axios.get(url);
 	var body = res.data;
@@ -125,7 +132,6 @@ function prependRow(html) {
 		timeData,
 		cells: [socialImage, avatarImage, userName, message, timeString],
 	});
-	debug();
 }
 function clearRows() {
 	socialData.items = [];
@@ -134,7 +140,7 @@ function updateTimes() {}
 function setPaging(a, b) {}
 
 async function sendRow(id) {
-	let res = await axios.get(`${parentVmixSocial}/preview.aspx?ID=${id}`);
+	let res = await axios.get(`${parentVmixSocial}/send.aspx?ID=${id}`);
 	console.log(res.data);
 }
 

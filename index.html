@@ -19,6 +19,7 @@
 		<div id="app">
 			<table style="width: 100%;">
 				<tr v-for="item in socialData.items">
+					<td><button @click="sendRow(item.id)">SEND!</button></td>
 					<td><img :src="item.socialImage" /></td>
 					<td><img :src="item.avatarImage" /></td>
 					<td>{{item.userName}}</td>
@@ -45,26 +46,21 @@
 				},
 				methods: {
 					async getData(renewSession = false) {
-						if (renewSession) this.sessionID = guid();
 						let url = `${server}/data`;
+						if (renewSession === true) url += "?renew=1";
 						let res = await axios.get(url);
 						var body = res.data;
 						this.socialData = body;
 					},
+					async sendRow(id) {
+						let url = `${server}/sendRow?rowId=${id}`;
+						let res = await axios.get(url);
+					},
 				},
 				created() {
-					this.getData();
+					this.getData(true);
 				},
 			});
-
-			async function getData(renewSession = false) {
-				if (renewSession) sessionID = guid();
-				let url = `${parentVmixSocial}/update.aspx?sessionID=${sessionID}&filter=&page=${currentPage}&queue=${viewQueue}`;
-				let res = await axios.get(url);
-				var body = res.data;
-				var json = update2Json(body);
-				console.log(json);
-			}
 
 			function s4() {
 				return Math.floor((1 + Math.random()) * 0x10000)
@@ -74,33 +70,6 @@
 			function guid() {
 				return s4() + s4() + "-" + s4() + "-" + s4() + "-" + s4() + "-" + s4() + s4() + s4();
 			}
-
-			function update(text) {
-				eval(text);
-				// // first we get the field names from the setHead command
-				// var fields = [];
-				// var re, res;
-				// re = RegExp(/<th>(.*?)<\/th>/g);
-
-				// while (true) {
-				//     let m = re.exec(text);
-				//     if (m === null) break;
-				//     let content = m[1];
-				//     if (content != ' ') fields.push(content);
-				// }
-
-				// re = RegExp(/(<tr id=)/);
-			}
-
-			function setHead(html) {
-				console.log(html);
-			}
-			function prependRow(html) {
-				console.log(html);
-			}
-			function clearRows() {}
-			function updateTimes() {}
-			function setPaging(a, b) {}
 		</script>
 	</body>
 </html>
