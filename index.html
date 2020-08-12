@@ -3,10 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta http-equiv="x-ua-compatible" content="ie=edge" />
-		<meta
-			name="viewport"
-			content="width=device-width, initial-scale=1, shrink-to-fit=no"
-		/>
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
 		<title>vMix Social Replacement</title>
 
@@ -24,6 +21,13 @@
 		/>
 
 		<style type="text/css">
+			body {
+				background: #343a40;
+				margin-bottom: 200px;
+			}
+			tr.active td {
+				background: #153f6a;
+			}
 			.socialImage {
 				margin-bottom: 4px;
 				width: 50px;
@@ -38,47 +42,58 @@
 	<body>
 		<div id="app" class="container-fluid" style="padding: 0;">
 			<table style="width: 100%;" class="table table-dark table-sm table-hover">
-				<tr v-for="item in socialData.items">
-					<td align="center">
-						<img :src="item.socialImage" class="socialImage" /><br />
-						<button class="btn btn-primary" @click="sendRow(item.id)">
-							SEND
-						</button>
+				<tr v-for="item in socialData.items" v-if="!isHidden(item.id)" :class="{active: activeID == item.id}" @click="select(item.id)">
+					<td style="text-align: center;">
+						<img :src="item.socialImage" class="socialImage" />
 					</td>
 					<td>
 						<div>
-							<img
-								:src="item.avatarImage"
-								align="left"
-								style="margin-right: 8px;"
-							/>
+							<img :src="item.avatarImage" align="left" style="margin-right: 8px;" />
 							<b>{{item.userName}}</b>
 							<br />
-							<span class="time">{{item.timeString}}</span>
+							<span class="time">{{item.timeData | niceTime}}</span>
 						</div>
 						<div style="margin-top: 8px;">
 							<span v-html="item.message"></span>
 						</div>
 					</td>
+					<!-- <td valign="middle">
+						<button class="btn btn-primary" @click="sendRow(item.id)">
+							SHOW
+						</button>
+					</td> -->
 				</tr>
 			</table>
+			<div style="text-align: center; position: fixed; bottom: 0; left: 0; right: 0; padding: 10px; background-color: #1b2631;">
+				<button style="display: inline-block; width: 40vw;" class="btn btn-primary" @click="unhide()">SHOW ALL</button>
+				<button style="display: inline-block; width: 40vw;" class="btn btn-primary" @click="reload()">RELOAD</button>
+			</div>
 		</div>
 		<script>
 			/// FUNCTIONS and CONSTANTS
 			const server = "http://localhost:8090";
-			let timer;
 
 			var app = new Vue({
 				el: "#app",
 				data: {
-					confirmID: "",
-					sessionID: guid(),
-					activeFilter: "",
-					currentPage: 1,
-					pageCount: 1,
 					updateInterval: null,
-					viewQueue: false,
+					activeID: null,
 					socialData: {},
+					hiddenIDs: [],
+				},
+				filters: {
+					niceTime(d) {
+						var elapsed = Date.now() - new Date(d); // elapsed time in milliseconds
+						var result = "";
+						if (elapsed < 60000) {
+							result = Math.round(elapsed / 1000) + "s";
+						} else if (elapsed < 3600000) {
+							result = Math.round(elapsed / 60000) + "m";
+						} else if (elapsed < 86400000) {
+							result = Math.round(elapsed / 3600000) + "h";
+						}
+						return result;
+					},
 				},
 				methods: {
 					async getData(renewSession = false) {
@@ -90,39 +105,33 @@
 						this.socialData = body;
 					},
 					async sendRow(id) {
+						this.activeID = id;
 						let url = `${server}/sendRow?rowId=${id}`;
 						let res = await axios.get(url);
+					},
+					select(id) {
+						if (this.activeID && !this.isHidden(this.activeID)) this.hiddenIDs.push(this.activeID);
+						this.sendRow(id);
+					},
+					isHidden(id) {
+						for (let hiddenID of this.hiddenIDs) if (id == hiddenID) return true;
+						return false;
+					},
+					unhide() {
+						this.hiddenIDs = [];
+					},
+					reload() {
+						this.unhide();
+						this.getData(true);
 					},
 				},
 				created() {
 					this.getData(true);
-					timer = setInterval(() => {
+					this.updateInterval = setInterval(() => {
 						this.getData(true);
 					}, 5000);
 				},
 			});
-
-			function s4() {
-				return Math.floor((1 + Math.random()) * 0x10000)
-					.toString(16)
-					.substring(1);
-			}
-			function guid() {
-				return (
-					s4() +
-					s4() +
-					"-" +
-					s4() +
-					"-" +
-					s4() +
-					"-" +
-					s4() +
-					"-" +
-					s4() +
-					s4() +
-					s4()
-				);
-			}
 		</script>
 	</body>
 </html>
