@@ -3,7 +3,10 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta http-equiv="x-ua-compatible" content="ie=edge" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1, shrink-to-fit=no"
+		/>
 
 		<title>vMix Social Replacement</title>
 
@@ -13,18 +16,50 @@
 			crossorigin="anonymous"
 		></script>
 		<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+		<link
+			rel="stylesheet"
+			href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+			integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+			crossorigin="anonymous"
+		/>
+
+		<style type="text/css">
+			.socialImage {
+				margin-bottom: 4px;
+				width: 50px;
+				height: 50px;
+			}
+			.time {
+				font-size: 0.8em;
+			}
+		</style>
 	</head>
 
 	<body>
-		<div id="app">
-			<table style="width: 100%;">
+		<div id="app" class="container-fluid" style="padding: 0;">
+			<table style="width: 100%;" class="table table-dark table-sm table-hover">
 				<tr v-for="item in socialData.items">
-					<td><button @click="sendRow(item.id)">SEND!</button></td>
-					<td><img :src="item.socialImage" /></td>
-					<td><img :src="item.avatarImage" /></td>
-					<td>{{item.userName}}</td>
-					<td>{{item.message}}</td>
-					<td>{{item.timeString}}</td>
+					<td align="center">
+						<img :src="item.socialImage" class="socialImage" /><br />
+						<button class="btn btn-primary" @click="sendRow(item.id)">
+							SEND
+						</button>
+					</td>
+					<td>
+						<div>
+							<img
+								:src="item.avatarImage"
+								align="left"
+								style="margin-right: 8px;"
+							/>
+							<b>{{item.userName}}</b>
+							<br />
+							<span class="time">{{item.timeString}}</span>
+						</div>
+						<div style="margin-top: 8px;">
+							<span v-html="item.message"></span>
+						</div>
+					</td>
 				</tr>
 			</table>
 		</div>
@@ -73,7 +108,20 @@
 					.substring(1);
 			}
 			function guid() {
-				return s4() + s4() + "-" + s4() + "-" + s4() + "-" + s4() + "-" + s4() + s4() + s4();
+				return (
+					s4() +
+					s4() +
+					"-" +
+					s4() +
+					"-" +
+					s4() +
+					"-" +
+					s4() +
+					"-" +
+					s4() +
+					s4() +
+					s4()
+				);
 			}
 		</script>
 	</body>
