@@ -8,6 +8,14 @@ const port = 8090;
 
 const parentVmixSocial = "http://192.168.50.12:8089";
 
+var sessionID = guid();
+var viewQueue = false;
+var firstLoad = true;
+const socialData = { fields: [], items: [] };
+
+// getData();
+// var refreshInterval = setInterval(getData, 5000);
+
 /// ROUTES
 app.use(express.static("."));
 
@@ -16,16 +24,18 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/data", async (req, res) => {
-	await getData(req.query.renew === 1);
-	res.json(socialData);
-	// res.send(data);
+	console.log("received data request");
+	getData(req.query.renew === 1).then(() => {
+		res.json(socialData);
+	});
 });
 
 /// ?rowId=[id]
 app.get("/sendRow", async (req, res) => {
-	await sendRow(req.query.rowId);
-	res.json(socialData);
-	// res.send(data);
+	let id = req.query.rowId;
+	console.log(`selecting row: ${id}`);
+	sendRow(id);
+	res.send(`selected row: ${id}`); // DON'T FORGET TO SEND THE RESPONSE!!!
 });
 
 /// boilerplate
@@ -33,20 +43,17 @@ app.listen(port, () => {
 	console.log(`Listening on port ${port}`);
 });
 
-/// FUNCTIONS and CONSTANTS
-var confirmID = "";
-var sessionID = guid();
-var activeFilter = "";
-var currentPage = 1;
-var pageCount = 1;
-var updateInterval = null;
-var viewQueue = false;
-const socialData = { fields: [], items: [] };
-
-async function getData(renewSession = false) {
-	if (renewSession === true) sessionID = guid();
-	let url = `${parentVmixSocial}/update.aspx?sessionID=${sessionID}&filter=&page=${currentPage}&queue=${viewQueue}`;
-	axios
+/// FUNCTIONS
+function getData(renewSession = false, page = 1) {
+	if (renewSession === true) {
+		sessionID = guid();
+		firstLoad = true;
+		socialData.fields = [];
+		socialData.items = [];
+	}
+	let url = `${parentVmixSocial}/update.aspx?sessionID=${sessionID}&filter=&page=${page}&queue=${viewQueue}`;
+	console.log(url);
+	return axios
 		.get(url, { timeout: 2000 })
 		.then((response) => {
 			handleJS(response.data);
@@ -56,9 +63,11 @@ async function getData(renewSession = false) {
 		});
 }
 
-async function sendRow(id) {
-	axios
-		.get(`${parentVmixSocial}/send.aspx?ID=${id}`, { timeout: 2000 })
+function sendRow(id) {
+	let url = `${parentVmixSocial}/send.aspx?ID=${id}`;
+	console.log(url);
+	return axios
+		.get(url, { timeout: 2000 })
 		.then((response) => {
 			console.log(response.data);
 		})
@@ -79,25 +88,20 @@ function guid() {
 function handleErr(err) {
 	console.log(err.code);
 	console.log(err.message);
-	console.log(err.stack);
+	console.log("=== DON'T WORRY... WE'RE STILL HERE ===");
+	// console.log(err.stack);
 }
 
 function handleJS(text) {
 	// console.log(text);
 	eval(text);
-	// // first we get the field names from the setHead command
-	// var fields = [];
-	// var re, res;
-	// re = RegExp(/<th>(.*?)<\/th>/g);
+	// descending sort, most recent at top
+	socialData.items.sort((b, a) => a.timeData - b.timeData);
+}
 
-	// while (true) {
-	//     let m = re.exec(text);
-	//     if (m === null) break;
-	//     let content = m[1];
-	//     if (content != ' ') fields.push(content);
-	// }
-
-	// re = RegExp(/(<tr id=)/);
+function idExists(id) {
+	for (let existing of socialData.items) if (existing.id == id) return true;
+	return false;
 }
 
 function setHead(html) {
@@ -112,7 +116,7 @@ function setHead(html) {
 		let content = m[1];
 		if (content != " ") socialData.fields.push(content);
 	}
-	debug();
+	// debug();
 }
 function prependRow(html) {
 	// console.log(html);
@@ -122,6 +126,7 @@ function prependRow(html) {
 
 	// cells[0] contains the <tr data
 	let rowId = cells[0].match(/sendRow\('(.*?)'\)/)[1];
+	if (idExists(rowId)) return;
 
 	// cells[1] contains the hidden "accepted icon"
 	// cells[3] contains the social service icon
@@ -140,11 +145,11 @@ function prependRow(html) {
 	let timeString = entities.decode(cells[11]);
 
 	// but the real data is in the data-date attribute
+	let timeData = new Date(timeString);
 	let timeDataAttrib = html.match(/data-date='(.*?)'/)[1];
-	let timeData = new Date();
-	if (timeDataAttrib) timeData = Date(timeDataAttrib);
+	if (timeDataAttrib) timeData = new Date(timeDataAttrib);
 
-	socialData.items.push({
+	let item = {
 		id: rowId,
 		socialImage,
 		avatarImage,
@@ -153,13 +158,27 @@ function prependRow(html) {
 		timeString,
 		timeData,
 		cells: [socialImage, avatarImage, userName, message, timeString],
-	});
+	};
+
+	socialData.items.push(item);
 }
 function clearRows() {
-	socialData.items = [];
+	// socialData.items = [];
 }
 function updateTimes() {}
-function setPaging(a, b) {}
+
+// if this is the first load, there might be multiple pages to load
+// if this is a subsequent load, all the new data shows up at the top
+// so we don't really need to grab data from any other page
+function setPaging(pageCount, maxPerPage) {
+	if (firstLoad) {
+		firstLoad = false;
+		for (var page = 2; page <= pageCount; page++) {
+			console.log("loading another page... " + page);
+			getData(false, page);
+		}
+	}
+}
 
 function debug() {
 	console.log(JSON.stringify(socialData));

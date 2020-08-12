@@ -24,9 +24,20 @@
 			body {
 				background: #343a40;
 				margin-bottom: 200px;
+				font-family: Helvetica, Arial, sans-serif;
+			}
+			.message {
+				font-size: 20px;
+				padding: 10px 0;
+			}
+			tr td {
+				transition: opacity 1s;
 			}
 			tr.active td {
 				background: #153f6a;
+			}
+			tr.hidden td {
+				opacity: 0.1;
 			}
 			.socialImage {
 				margin-bottom: 4px;
@@ -42,7 +53,7 @@
 	<body>
 		<div id="app" class="container-fluid" style="padding: 0;">
 			<table style="width: 100%;" class="table table-dark table-sm table-hover">
-				<tr v-for="item in socialData.items" v-if="!isHidden(item.id)" :class="{active: activeID == item.id}" @click="select(item.id)">
+				<tr v-for="item in socialData.items" :class="{active: activeID == item.id, hidden: isHidden(item.id)}" @click="select(item.id)">
 					<td style="text-align: center;">
 						<img :src="item.socialImage" class="socialImage" />
 					</td>
@@ -53,15 +64,10 @@
 							<br />
 							<span class="time">{{item.timeData | niceTime}}</span>
 						</div>
-						<div style="margin-top: 8px;">
+						<div class="message" style="margin-top: 8px;">
 							<span v-html="item.message"></span>
 						</div>
 					</td>
-					<!-- <td valign="middle">
-						<button class="btn btn-primary" @click="sendRow(item.id)">
-							SHOW
-						</button>
-					</td> -->
 				</tr>
 			</table>
 			<div style="text-align: center; position: fixed; bottom: 0; left: 0; right: 0; padding: 10px; background-color: #1b2631;">
@@ -83,7 +89,8 @@
 				},
 				filters: {
 					niceTime(d) {
-						var elapsed = Date.now() - new Date(d); // elapsed time in milliseconds
+						let date = new Date(d);
+						var elapsed = Date.now() - date; // elapsed time in milliseconds
 						var result = "";
 						if (elapsed < 60000) {
 							result = Math.round(elapsed / 1000) + "s";
@@ -91,6 +98,8 @@
 							result = Math.round(elapsed / 60000) + "m";
 						} else if (elapsed < 86400000) {
 							result = Math.round(elapsed / 3600000) + "h";
+						} else {
+							result = date.toDateString();
 						}
 						return result;
 					},
