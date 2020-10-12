@@ -7,6 +7,7 @@ The vMix Social interface is nice and all, but this makes it nicer.
 ```
 $ git clone https://github.com/jeffmikels/vmix-social-mobile.git
 $ cd vmix-social-mobile
+$ npm install
 $ node index.js [IP_ADDRESS_OF_YOUR_VMIX_COMPUTER]
 ```
 
