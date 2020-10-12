@@ -1,20 +1,24 @@
+const os = require("os");
 const express = require("express");
 const axios = require("axios").default;
 const Entities = require("html-entities").AllHtmlEntities;
 const entities = new Entities();
 
+const config = require("./config.js");
 const app = express();
-const port = 8090;
-
-const parentVmixSocial = "http://192.168.50.12:8089";
+const localListenPort = 8090;
 
 var sessionID = guid();
 var viewQueue = false;
 var firstLoad = true;
 const socialData = { fields: [], items: [] };
 
-// getData();
-// var refreshInterval = setInterval(getData, 5000);
+var vMixSocialUrl = `http://${config.vmixSocialHost}:${config.vMixSocialPort}`;
+if (process.argv.length > 2) {
+	vMixSocialUrl = `http://${process.argv[2]}:${config.vmixSocialPort}`;
+}
+console.log("---------- STARTING ------------------");
+console.log(`Connecting to vMix at ${vMixSocialUrl}`);
 
 /// ROUTES
 app.use(express.static("."));
@@ -39,8 +43,18 @@ app.get("/sendRow", async (req, res) => {
 });
 
 /// boilerplate
-app.listen(port, () => {
-	console.log(`Listening on port ${port}`);
+app.listen(localListenPort, () => {
+	console.log("vMix Social Replacement is running at the following addresses:");
+
+	var nets = os.networkInterfaces();
+	for (const name of Object.keys(nets)) {
+		for (const net of nets[name]) {
+			// skip over non-ipv4 and internal (i.e. 127.0.0.1) addresses
+			if (net.family === "IPv4" && !net.internal) {
+				console.log(` --> http://${net.address}:${localListenPort}`);
+			}
+		}
+	}
 });
 
 /// FUNCTIONS
@@ -51,7 +65,7 @@ function getData(renewSession = false, page = 1) {
 		socialData.fields = [];
 		socialData.items = [];
 	}
-	let url = `${parentVmixSocial}/update.aspx?sessionID=${sessionID}&filter=&page=${page}&queue=${viewQueue}`;
+	let url = `${vMixSocialUrl}/update.aspx?sessionID=${sessionID}&filter=&page=${page}&queue=${viewQueue}`;
 	console.log(url);
 	return axios
 		.get(url, { timeout: 2000 })
@@ -64,7 +78,7 @@ function getData(renewSession = false, page = 1) {
 }
 
 function sendRow(id) {
-	let url = `${parentVmixSocial}/send.aspx?ID=${id}`;
+	let url = `${vMixSocialUrl}/send.aspx?ID=${id}`;
 	console.log(url);
 	return axios
 		.get(url, { timeout: 2000 })
@@ -130,7 +144,7 @@ function prependRow(html) {
 
 	// cells[1] contains the hidden "accepted icon"
 	// cells[3] contains the social service icon
-	let socialImage = parentVmixSocial + "/" + cells[3].match(/src='(.*?)'/)[1];
+	let socialImage = vMixSocialUrl + "/" + cells[3].match(/src='(.*?)'/)[1];
 
 	// cells[5] contains the avatar image
 	let avatarImage = cells[5].match(/src='(.*?)'/)[1];
